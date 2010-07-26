@@ -52,6 +52,7 @@ extern void sphone_manager_call_hold_and_answer(void);
 extern void sphone_manager_call_swap(void);
 extern int sphone_manager_dial(SphoneManager *manager, const gchar *dial);
 extern int sphone_manager_sms_send(SphoneManager *manager, const gchar *to, const char *text);
+extern void sphone_manager_populate(SphoneManager *manager);
 
 G_END_DECLS
 

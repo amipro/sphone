@@ -191,7 +191,7 @@ static void gui_dialer_validate_callback(GtkEntry *entry,const gchar *text,gint 
 	gchar *result = g_new (gchar, length);
 
 	for (i=0; i < length; i++) {
-		if (!isdigit(text[i]) && text[i]!='*' && text[i]!='#')
+		if (!isdigit(text[i]) && text[i]!='*' && text[i]!='#'  && text[i]!='+')
 			continue;
 		result[count++] = text[i];
 	}

@@ -91,7 +91,7 @@ void notification_update_strength_cb(){
 		gtk_status_icon_set_from_file(g_notification.status_icon_network_strength,path);
 		g_free(path);
 	}else{
-		gtk_status_icon_set_from_file(g_notification.status_icon_network_strength,"icons/network-strength-none.png");
+		gtk_status_icon_set_from_file(g_notification.status_icon_network_strength,ICONS_PATH  "network-strength-none.png");
 	}
 }
 
@@ -116,4 +116,43 @@ static void notification_send_sms_callback(void)
 static void notification_icon_activate_callback(GtkStatusIcon *status_icon, GtkWidget *menu)
 {
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, gtk_status_icon_position_menu, status_icon, 0, gtk_get_current_event_time());
+}
+
+typedef struct {
+	gchar *name;
+	GtkStatusIcon *icon;
+	gboolean (*click_cb)(GtkStatusIcon *status_icon,gconstpointer user_data);
+}NotificationItem;
+
+GList *notifications=NULL;
+gint notification_item_compare(gconstpointer _a,gconstpointer _b)
+{
+	NotificationItem *a=(NotificationItem *)_a;
+	gchar *b=(gchar *)_b;
+	return a==NULL||b==NULL?-1:g_strcmp0(a->name,b);
+}
+
+void notification_add(const gchar *name,gboolean (*click_cb)(GtkStatusIcon *status_icon,gconstpointer user_data))
+{
+	GList *iteml=g_list_find_custom(notifications,name,notification_item_compare);
+	if(iteml)
+		return;
+	NotificationItem *item=g_new(NotificationItem,1);
+	item->name=g_strdup(name);
+	item->icon=gtk_status_icon_new_from_pixbuf(utils_get_icon(name));
+	item->click_cb=click_cb;
+	g_signal_connect (G_OBJECT (item->icon), "activate", G_CALLBACK (item->click_cb), NULL);
+	notifications=g_list_append(notifications,item);
+}
+
+void notification_remove(const gchar *name)
+{
+	GList *iteml=g_list_find_custom(notifications,name,notification_item_compare);
+	if(!iteml)
+		return;
+	NotificationItem *item=iteml->data;
+	g_free(item->name);
+	g_object_unref(item->icon);
+	g_free(item);
+	notifications=g_list_delete_link(notifications,iteml);
 }

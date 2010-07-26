@@ -114,7 +114,11 @@ static void _sphone_manager_voice_call_manager_properties_callback(gpointer *dat
 	int i=0;
 	
 	SphoneManagerPrivate *private=SPHONE_MANAGER_GET_PRIVATE(object);
+
+	if(value==NULL)
+		return;
 	debug("_sphone_manager_voice_call_manager_properties_callback %s %s\n",name,G_VALUE_TYPE_NAME(value));
+	
 	if(!g_strcmp0 (name, "Calls")){
 		GPtrArray *l=g_value_get_boxed(value);
 		// Add new call objects
@@ -394,4 +398,11 @@ int sphone_manager_sms_send(SphoneManager *manager, const gchar *to, const char 
 	store_sms_add(STORE_INTERACTION_DIRECTION_OUTGOING, time(NULL),to,text);
 	
 	return ofono_sms_send(to,text);
+}
+
+void sphone_manager_populate(SphoneManager *manager)
+{
+	GValue *v;
+	if(!ofono_voice_call_manager_get_calls(&v))
+		_sphone_manager_voice_call_manager_properties_callback(NULL,"Calls",v,manager);
 }

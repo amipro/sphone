@@ -22,4 +22,7 @@
 void notification_set_strength(gint strength);
 int notification_init(SphoneManager *manager);
 
+void notification_add(const gchar *name,gboolean (*click_cb)(GtkStatusIcon *status_icon,gconstpointer user_data));
+void notification_remove(const gchar *name);
+
 #endif

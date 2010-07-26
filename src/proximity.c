@@ -35,7 +35,9 @@ int setup_proximity(){
 	char evtype_b[EV_MAX/8];
 	int fd;
 	char buf[21];
-        char tmp[50];
+    char devname[50];
+	int found=0;
+	debug("setup_proximity\n");
 
 	// loop for input devices in /dev/input
 	dp = opendir ("/dev/input");
@@ -45,7 +47,7 @@ int setup_proximity(){
 			if(!strncmp("event",ep->d_name,5)){
 				// test device has keys but not a pointer
 				sprintf(buf,"/dev/input/%s",ep->d_name);
-				fd=open(buf,O_RDONLY|O_NDELAY);
+				fd=open(buf,O_RDONLY);
 				if(fd<0){
 					error("Open error of evdev[%s]: %s\n",ep->d_name, strerror(errno));
 					continue;
@@ -56,13 +58,24 @@ int setup_proximity(){
 					close(fd);
 					continue;
 				}
-				if (!TEST_BIT(EV_KEY, evtype_b) || TEST_BIT(EV_REL, evtype_b) || TEST_BIT(EV_ABS, evtype_b)){
+				if (!TEST_BIT(EV_ABS, evtype_b) || TEST_BIT(EV_REL, evtype_b) || TEST_BIT(EV_KEY, evtype_b)){
 					debug("Input device %s was ignored\n",ep->d_name);
 					close(fd);
 					continue;
 				}
-				evdev_fd_list[evdev_count++]=fd;
-				debug("Input device %s was added\n",ep->d_name);
+				if (ioctl(fd, EVIOCGNAME(sizeof(devname)), devname) < 0) {
+					error("evdev EVIOCGNAME ioctl error of evdev[%s]: %s\n",ep->d_name, strerror(errno));
+					close(fd);
+					continue;
+				}
+				if(!strstr(devname,"prox")){
+					debug("Input device %s was ignored\n",ep->d_name);
+					close(fd);
+					continue;
+				}
+				debug("Input device %s[%s] was added\n",ep->d_name,devname);
+				found=1;
+				break;
 			}
 		}
 		closedir (dp);
@@ -72,16 +85,13 @@ int setup_proximity(){
 		err=-1;
 	}
 
-	if(!evdev_count){
-		error ("Can't find valid input device\n");
-		err=-1;
+	struct input_event e;
+	while(1){
+		if(read(fd, &e, sizeof(e))==sizeof(e)){
+			debug("Input event received type=%d code=%d value=%d\n",e.type,e.code,e.value);
+		}		
+		sleep(1);
 	}
-
-	// clearup incase of error
-	if(err){
-		clear_evdev();
-	}
-
 	return err;
 }
 

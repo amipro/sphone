@@ -24,6 +24,7 @@
 #include "gui-sms.h"
 #include "gui-dialer.h"
 #include "sphone-store-tree-model.h"
+#include "notification.h"
 #include "gui-contact-view.h"
 
 static void gui_contact_send_sms_callback(GtkButton *button, GtkLabel *dial_label)
@@ -369,6 +370,7 @@ gint gui_history_calls(void)
 	
 	gtk_widget_show_all(calls_window);
 
+	notification_remove("missed_call.png");
 	return 0;
 }
 

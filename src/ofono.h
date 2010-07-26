@@ -52,5 +52,6 @@ extern int ofono_call_swap();
 extern int ofono_dial(const gchar *dial);
 extern int ofono_sms_send(const gchar *to, const gchar *text);
 extern int ofono_sms_incoming_add_handler(gpointer handler, gpointer data);
+extern int ofono_voice_call_manager_get_calls(GValue **v);
 
 #endif

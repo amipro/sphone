@@ -148,6 +148,7 @@ int main (int argc, char *argv[])
 	                                               ,"history-sms",SPHONE_CMD_HISTORY_SMS
 	                                               ,"history-calls",SPHONE_CMD_HISTORY_CALLS
 	                                               ,"sms-new",SPHONE_CMD_SMS_NEW,NULL);
+
 	if(is_done);
 	else if(!unique_app_is_running(unique)){
 		debug("Staring new instance\n");
@@ -157,6 +158,7 @@ int main (int argc, char *argv[])
 		gui_calls_manager_init(manager);
 		gui_dialer_init(manager);
 		gui_sms_init(manager);
+		sphone_manager_populate(manager);
 
 		if(is_cmd_dialer_open)
 			gui_dialer_show(NULL);

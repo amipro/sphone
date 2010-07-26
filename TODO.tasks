@@ -1,6 +1,25 @@
 <?xml version="1.0"?>
 <gtodo>
-  
-  
-  <category title="sphone-0.04" place="0"><item><attribute id="1279473913" priority="2" done="0" start_date="733971" enddate="99999999" notify="0" endtime="-60" last_edited="1279473913"/><summary>import CSV</summary><comment/></item><item><attribute id="1279473960" priority="2" done="0" start_date="733971" enddate="99999999" notify="0" endtime="-60" last_edited="1279473960"/><summary>disable screen during active call with proximity sensor help</summary><comment/></item><item><attribute id="1279473978" priority="2" done="0" start_date="733971" enddate="99999999" notify="0" endtime="-60" last_edited="1279473978"/><summary>missed call indicator</summary><comment/></item><item><attribute id="1279490364" priority="2" done="0" start_date="733971" enddate="99999999" notify="0" endtime="-60" last_edited="1279490364"/><summary>fix + issue when clicking on right address book  to dial</summary><comment></comment></item></category>
+  <category title="sphone-0.04" place="0">
+    <item>
+      <attribute id="1279490364" priority="2" done="1" start_date="733971" completed_date="733977" notify="0" last_edited="1279929637"/>
+      <summary>fix + issue when clicking on right address book  to dial</summary>
+      <comment/>
+    </item>
+    <item>
+      <attribute id="1279473978" priority="2" done="1" start_date="733971" completed_date="733979" notify="0" last_edited="1280174310"/>
+      <summary>missed call indicator</summary>
+      <comment/>
+    </item>
+    <item>
+      <attribute id="1279473913" priority="2" done="0" start_date="733971" notify="0" last_edited="1280174317"/>
+      <summary>import CSV</summary>
+      <comment/>
+    </item>
+    <item>
+      <attribute id="1279473960" priority="2" done="0" start_date="733971" notify="0" last_edited="1280174323"/>
+      <summary>disable screen during active call with proximity sensor help</summary>
+      <comment></comment>
+    </item>
+  </category>
 </gtodo>

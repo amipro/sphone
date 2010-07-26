@@ -25,6 +25,7 @@
 #include "gui-calls-manager.h"
 #include "gui-contact-view.h"
 #include "store.h"
+#include "notification.h"
 
 struct {
 	SphoneManager *manager;
@@ -157,19 +158,22 @@ static void gui_calls_call_status_callback(SphoneCall *call)
 {
 	gchar *dial=NULL;
 	gchar *state=NULL;
+	gint answer_status, direction;
 	
 	debug("gui_calls_call_status_callback\n");
 	
-	g_object_get( G_OBJECT(call), "line_identifier", &dial, "state", &state, NULL);
+	g_object_get( G_OBJECT(call), "line_identifier", &dial, "state", &state, "answer_status", &answer_status, "direction", &direction, NULL);
 	debug("Update call %s %s\n",dial,state);
 	if(!g_strcmp0 (state,"incoming"))
 		utils_start_ringing();
 	else
 		utils_stop_ringing();
 
-	if(!g_strcmp0 (state,"disconnected"))
+	if(!g_strcmp0 (state,"disconnected")){
 		gui_calls_utils_delete_dial(dial);
-	else
+		if(answer_status==STORE_INTERACTION_CALL_STATUS_MISSED && direction==STORE_INTERACTION_DIRECTION_INCOMING)
+			notification_add("missed_call.png",gui_history_calls);
+	}else
 		gui_calls_utils_update_dial(dial,state);
 
 	gui_calls_check_voice();

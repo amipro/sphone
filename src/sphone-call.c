@@ -31,7 +31,9 @@ enum
 
 	PROP_STATE,
 	PROP_LINE_IDENTIFIER,
-	PROP_DBUS_PATH
+	PROP_DBUS_PATH,
+	PROP_ANSWER_STATUS,
+	PROP_DIRECTION
 };
 
 enum
@@ -161,6 +163,12 @@ sphone_call_get_property (GObject *object, guint prop_id, GValue *value, GParamS
 	case PROP_DBUS_PATH:
 		g_value_set_string(value, private->dbus_path);
 		break;
+	case PROP_ANSWER_STATUS:
+		g_value_set_int(value, private->answer_status);
+		break;
+	case PROP_DIRECTION:
+		g_value_set_int(value, private->direction);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -200,6 +208,26 @@ sphone_call_class_init (SphoneCallClass *klass)
 	                                                      "",
 	                                                      "",
 	                                                      G_PARAM_READWRITE));
+
+	g_object_class_install_property (object_class,
+	                                 PROP_ANSWER_STATUS,
+	                                 g_param_spec_int ("answer_status",
+	                                                   "",
+	                                                   "",
+	                                                   G_MININT, 
+	                                                   G_MAXINT, 
+	                                                   0,
+	                                                   G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+	                                 PROP_DIRECTION,
+	                                 g_param_spec_int ("direction",
+	                                                   "",
+	                                                   "",
+	                                                   G_MININT, 
+	                                                   G_MAXINT, 
+	                                                   0,
+	                                                   G_PARAM_READABLE));
 
 	call_signals[STATUS_CHANGED] =
 		g_signal_new ("status_changed",

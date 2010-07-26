@@ -265,6 +265,32 @@ int ofono_voice_call_manager_properties_remove_handler(gpointer handler, gpointe
 	return ret;
 }
 
+int ofono_voice_call_manager_get_calls(GValue **v)
+{
+	GError *error=NULL;
+	GHashTable *props=NULL;
+	int ret=0;
+
+	if (g_ofono.connection == NULL)	{
+		ret=-1;
+		goto error;
+	}
+
+	// Read network properties
+	if (!dbus_g_proxy_call (ofono_proxy_voice_call_manager_get(), "GetProperties", &error, G_TYPE_INVALID,
+         dbus_g_type_get_map ("GHashTable", G_TYPE_STRING,G_TYPE_VALUE), &props, G_TYPE_INVALID))
+    {
+		error_dbus(error,"org.ofono.VoiceCallManager->GetProperties");
+		ret=-1;
+		goto error;
+    }
+	*v=g_hash_table_lookup(props,"Calls");
+
+error:
+	//if(props)g_hash_table_destroy(props);
+	return ret;
+}
+
 int ofono_call_properties_read(OfonoCallProperties *properties, gchar *path)
 {
 	GError *error=NULL;
@@ -295,8 +321,6 @@ int ofono_call_properties_read(OfonoCallProperties *properties, gchar *path)
 	properties->line_identifier=g_value_dup_string(v);
 	v=g_hash_table_lookup(props,"StartTime");
 	properties->start_time=g_value_dup_string(v);
-
-	debug("State=%s, LineIdentifier=%s, StartTime=%s\n",properties->state, properties->line_identifier, properties->start_time);
 
 error:
 	if(props)g_hash_table_destroy(props);
