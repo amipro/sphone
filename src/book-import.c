@@ -147,9 +147,11 @@ static int book_import_csv(gchar *text)
 	int column=0;
 	char headers[50];
 	char *dials[50];
-	int namecolumn=-1;
+	int firstnamecolumn=-1;
+	int lastnamecolumn=-1;
+	int displaynamecolumn=-1;
 	int dialcolumns=0;
-	char *name;
+	char *displayname, *firstname, *lastname;
 	int i;
 	
 	debug ("book_import_csv\n");
@@ -158,9 +160,13 @@ static int book_import_csv(gchar *text)
 	while(*text && *text!='\n'){
 		gchar *label=csv_next_token(&text);
 		if(label!=NULL){
-			if(strcasestr(label,"name"))
-				debug("book_import_csv: set name column: %d\n",column),namecolumn=column;
-			if(strcasestr(label,"dial") && column<sizeof(headers))
+			if(strcasestr(label,"E-mail Display Name"))
+				debug("book_import_csv: set name column: %d\n",column),displaynamecolumn=column;
+			if(strcasestr(label,"First Name"))
+				debug("book_import_csv: set name column: %d\n",column),firstnamecolumn=column;
+			if(strcasestr(label,"Last Name"))
+				debug("book_import_csv: set name column: %d\n",column),lastnamecolumn=column;
+			if(strcasestr(label,"Phone") && column<sizeof(headers))
 				debug("book_import_csv: add dial column: %d\n",column),dialcolumns++,headers[column]=1;
 		}
 		if(*text==',')
@@ -169,22 +175,29 @@ static int book_import_csv(gchar *text)
 	if(*text=='\n')
 		text++;
 
-	if(namecolumn==-1 || !dialcolumns){
+	if((displaynamecolumn==-1 && firstnamecolumn==-1) || !dialcolumns){
 		error ("book_import_csv: invalid file format\n");
 		return -1;
 	}
+
+	store_bulk_transaction_start();
 	
 	//read data
 	while(*text){
+		char *name=NULL;
 		column=0;
-		name=NULL;
+		displayname=firstname=lastname=NULL;
 		memset(dials,0,sizeof(dials));
 		while(*text && *text!='\n'){
 			gchar *label=csv_next_token(&text);
 			if(label!=NULL){
-				if(namecolumn==column)
-					name=label;
-				else if(column<sizeof(headers) && headers[column])
+				if(displaynamecolumn==column)
+					displayname=label;
+				else if(firstnamecolumn==column)
+					firstname=label;
+				else if(lastnamecolumn==column)
+					lastname=label;
+				else if(column<sizeof(headers) && headers[column] && label && strlen(label)>1)
 					dials[column]=label;
 				else
 					g_free(label);
@@ -194,19 +207,37 @@ static int book_import_csv(gchar *text)
 		}
 		if(*text=='\n')
 			text++;
-		if(!name){
+		if(!displayname && !firstname && !lastname){
 			debug ("book_import_csv: ignore line with no name\n");
 			for(i=0;i<sizeof(headers);i++)g_free(dials[i]);
 			continue;
 		}
+
+		if(firstname && lastname)
+			name=g_strdup_printf("%s %s",firstname,lastname);
+		else if(lastname && !firstname)
+			name=lastname;
+		else if(firstname && !lastname)
+			name=firstname;
+		else
+			name=displayname;
+		
 		for(i=0;i<sizeof(headers);i++){
 			if(dials[i]){
 				debug ("book_import_csv: add name[%s] dial[%s]\n",name,dials[i]);
+				store_contact_add_dial(store_contact_add(name),dials[i]);
 			}
 		}
 		for(i=0;i<sizeof(headers);i++)g_free(dials[i]);
-		g_free(name);
+		if(firstname && lastname)
+			g_free(name);
+		g_free(displayname);
+		g_free(firstname);
+		g_free(lastname);
 	}
+	
+	store_transaction_commit();
+	
 	return 0;
 }
 

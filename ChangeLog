@@ -1,2 +1,6 @@
-
-
+0.04:
+	- Add feature - Import CSV file for names and dials
+	- Add feature - missed call notification icon
+	- Bug fix - no signal indicator icon
+	- Bug fix - load current active calls during startup
+	- Bug fix - accept + for dialer
