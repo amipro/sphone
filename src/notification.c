@@ -31,12 +31,20 @@ struct{
 	SphoneManager *manager;
 	GtkStatusIcon *status_icon_network_strength;
 	GtkStatusIcon *status_icon_network_technology;
+	GtkWidget *op_label;
 }g_notification;
 
 void notification_update_strength_cb();
 static void notification_dial_callback(void);
 static void notification_send_sms_callback(void);
 static void notification_icon_activate_callback(GtkStatusIcon *status_icon, GtkWidget *menu);
+
+void notification_update_operator_cb(){
+	gchar *name=NULL;
+	g_object_get(g_notification.manager,"operator",&name,NULL);
+	gtk_menu_item_set_label(GTK_MENU_ITEM(g_notification.op_label),name);
+	g_free(name);
+}
 
 int notification_init(SphoneManager *manager){
 	g_notification.manager=manager;
@@ -54,6 +62,9 @@ int notification_init(SphoneManager *manager){
 //	g_free(technology);
 
 	// Build the menu
+	gchar *noperator;
+	g_object_get(manager,"operator",&noperator,NULL);
+	g_notification.op_label=  gtk_menu_item_new_with_label(noperator);
 	GtkWidget *menu = gtk_menu_new();
 	GtkWidget *dial_menu = gtk_menu_item_new_with_label ("Dial");
 	GtkWidget *sms_menu = gtk_menu_item_new_with_label ("Send SMS");
@@ -65,6 +76,8 @@ int notification_init(SphoneManager *manager){
 	g_signal_connect (G_OBJECT (call_hist_menu), "activate", G_CALLBACK (gui_history_calls), NULL);
 	g_signal_connect (G_OBJECT (sms_hist_menu), "activate", G_CALLBACK (gui_history_sms), NULL);
 	g_signal_connect (G_OBJECT (exit_menu), "activate", G_CALLBACK (gtk_main_quit), NULL);
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), g_notification.op_label);
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), gtk_separator_menu_item_new());
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), dial_menu);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), sms_menu);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), call_hist_menu);
@@ -72,7 +85,10 @@ int notification_init(SphoneManager *manager){
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), exit_menu);
 	gtk_widget_show_all (menu);
 	g_signal_connect (G_OBJECT (g_notification.status_icon_network_strength), "activate", G_CALLBACK (notification_icon_activate_callback), menu);
+	g_signal_connect(manager, "network_property_operator_change", notification_update_operator_cb, NULL);
 
+	g_free(noperator);
+	
 	return 0;
 }
 

@@ -82,7 +82,7 @@ static void _sphone_manager_network_properties_callback(gpointer *data1,gchar *n
 		private->network_properties.technology=g_value_dup_string(value);
 		g_signal_emit(object,manager_signals[NETWORK_PROPERT_TECHNOLOGY_CHANGE],0,private->network_properties.technology);
 		debug("	  value='%s'\n",private->network_properties.technology);
-	}else if(!g_strcmp0(name,"Operator")){
+	}else if(!g_strcmp0(name,"Name")){
 		g_free(private->network_properties.noperator);
 		private->network_properties.noperator=g_value_dup_string(value);
 		g_signal_emit(object,manager_signals[NETWORK_PROPERT_OPERATOR_CHANGE],0,private->network_properties.noperator);

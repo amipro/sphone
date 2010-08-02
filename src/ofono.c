@@ -203,7 +203,7 @@ int ofono_read_network_properties(OfonoNetworkProperties *properties)
 	properties->status=g_value_dup_string(v);
 	v=g_hash_table_lookup(props,"Technology");
 	properties->technology=g_value_dup_string(v);
-	v=g_hash_table_lookup(props,"Operator");
+	v=g_hash_table_lookup(props,"Name");
 	properties->noperator=g_value_dup_string(v);
 	v=g_hash_table_lookup(props,"Strength");
 	properties->strength=g_value_get_uint(v);
