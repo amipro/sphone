@@ -16,7 +16,13 @@ icons_DATA = \
 	network-technology-U.png \
 	sms.png \
 	voice.png \
-	contact-person.png
+	contact-person.png \
+	network-roaming-strength-0.png \
+	network-roaming-strength-1.png \
+	network-roaming-strength-2.png \
+	network-roaming-strength-3.png \
+	network-roaming-strength-4.png \
+	network-strength-searching.png
 
 iconsdir = \
 	$(pkgdatadir)

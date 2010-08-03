@@ -38,13 +38,7 @@ void notification_update_strength_cb();
 static void notification_dial_callback(void);
 static void notification_send_sms_callback(void);
 static void notification_icon_activate_callback(GtkStatusIcon *status_icon, GtkWidget *menu);
-
-void notification_update_operator_cb(){
-	gchar *name=NULL;
-	g_object_get(g_notification.manager,"operator",&name,NULL);
-	gtk_menu_item_set_label(GTK_MENU_ITEM(g_notification.op_label),name);
-	g_free(name);
-}
+static void notification_update_operator_cb();
 
 int notification_init(SphoneManager *manager){
 	g_notification.manager=manager;
@@ -54,7 +48,6 @@ int notification_init(SphoneManager *manager){
 //	g_notification.status_icon_network_technology=gtk_status_icon_new_from_file("icons/network-technology-none.png");
 
 	notification_update_strength_cb();
-	g_signal_connect(manager, "network_property_strength_change", notification_update_strength_cb, NULL);
 
 //	gchar *technology;
 //	g_object_get(manager,"technology",&technology,NULL);
@@ -65,6 +58,7 @@ int notification_init(SphoneManager *manager){
 	gchar *noperator;
 	g_object_get(manager,"operator",&noperator,NULL);
 	g_notification.op_label=  gtk_menu_item_new_with_label(noperator);
+	g_object_set(G_OBJECT(g_notification.op_label),"can-focus",FALSE,NULL);
 	GtkWidget *menu = gtk_menu_new();
 	GtkWidget *dial_menu = gtk_menu_item_new_with_label ("Dial");
 	GtkWidget *sms_menu = gtk_menu_item_new_with_label ("Send SMS");
@@ -85,27 +79,44 @@ int notification_init(SphoneManager *manager){
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), exit_menu);
 	gtk_widget_show_all (menu);
 	g_signal_connect (G_OBJECT (g_notification.status_icon_network_strength), "activate", G_CALLBACK (notification_icon_activate_callback), menu);
+
 	g_signal_connect(manager, "network_property_operator_change", notification_update_operator_cb, NULL);
+	g_signal_connect(manager, "network_property_strength_change", notification_update_strength_cb, NULL);
+	g_signal_connect(manager, "network_property_status_change", notification_update_strength_cb, NULL);
 
 	g_free(noperator);
 	
 	return 0;
 }
 
+void notification_update_operator_cb(){
+	gchar *name=NULL;
+	g_object_get(g_notification.manager,"operator",&name,NULL);
+	gtk_menu_item_set_label(GTK_MENU_ITEM(g_notification.op_label),name);
+	g_free(name);
+}
+
 void notification_update_strength_cb(){
 	int strength=0;
-	g_object_get(g_notification.manager,"strength",&strength,NULL);
+	gchar *status;
+	
+	g_object_get(g_notification.manager,"strength",&strength,"status",&status,NULL);
 
 	int bars=strength/20;
 
 	debug("strength=%d bars=%d\n",strength,bars);
 	if(bars>4)
 		bars=4;
-	if(strength>0){
+	if(!g_strcasecmp (status,"registered")){
 		gchar *path=g_strdup_printf(ICONS_PATH "network-strength-%d.png",bars);
-		debug("load file %s\n",path);
 		gtk_status_icon_set_from_file(g_notification.status_icon_network_strength,path);
 		g_free(path);
+	}else if(!g_strcasecmp (status,"roaming")){
+		gchar *path=g_strdup_printf(ICONS_PATH "network-roaming-strength-%d.png",bars);
+		gtk_status_icon_set_from_file(g_notification.status_icon_network_strength,path);
+		g_free(path);
+	}else if(!g_strcasecmp (status,"searching")){
+		gtk_status_icon_set_from_file(g_notification.status_icon_network_strength,ICONS_PATH "network-strength-searching.png");
 	}else{
 		gtk_status_icon_set_from_file(g_notification.status_icon_network_strength,ICONS_PATH  "network-strength-none.png");
 	}
