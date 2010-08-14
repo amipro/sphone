@@ -1,6 +1,10 @@
 0.04:
-	- Add feature - Import CSV file for names and dials
-	- Add feature - missed call notification icon
+	- New feature - Import CSV file for names and dials
+	- New feature - missed call notification icon
+	- New feature - configuration files support
+	- New feature - vibration device interface is configurable, this should enable support for other devices
+	- New feature - audio device interface is configurable, this should enable support for other devices
+	- New feature - execute external applications for call and sms events
 	- Bug fix - no signal indicator icon
 	- Bug fix - load current active calls during startup
 	- Bug fix - accept + for dialer
