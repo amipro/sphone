@@ -145,6 +145,7 @@ static void _sphone_manager_sms_incoming_callback(gpointer *data1,gchar *text, G
 	struct tm tm;
 	strptime(_time,"%Y-%m-%dT%H:%M:%S%z",&tm);
 	store_sms_add(STORE_INTERACTION_DIRECTION_INCOMING, mktime(&tm),from,text);
+	utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_SMS_INCOMING,from,text,NULL);
 	
 	debug("_sphone_manager_sms_incoming_callback %s %s %s %p\n",from,text,_time,object);
 	
@@ -396,6 +397,7 @@ int sphone_manager_dial(SphoneManager *manager, const gchar *dial)
 int sphone_manager_sms_send(SphoneManager *manager, const gchar *to, const char *text)
 {
 	store_sms_add(STORE_INTERACTION_DIRECTION_OUTGOING, time(NULL),to,text);
+	utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_SMS_OUTGOING,to,text,NULL);
 	
 	return ofono_sms_send(to,text);
 }

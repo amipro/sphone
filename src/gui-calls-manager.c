@@ -149,9 +149,9 @@ static void gui_calls_check_voice(void)
 	}
 
 	if(enable_voice)
-		utils_audio_set(2);
+		utils_audio_set(1);
 	else
-		utils_audio_set(5);
+		utils_audio_set(0);
 }
 
 static void gui_calls_call_status_callback(SphoneCall *call)
@@ -165,14 +165,15 @@ static void gui_calls_call_status_callback(SphoneCall *call)
 	g_object_get( G_OBJECT(call), "line_identifier", &dial, "state", &state, "answer_status", &answer_status, "direction", &direction, NULL);
 	debug("Update call %s %s\n",dial,state);
 	if(!g_strcmp0 (state,"incoming"))
-		utils_start_ringing();
+		utils_start_ringing(dial);
 	else
-		utils_stop_ringing();
+		utils_stop_ringing(dial);
 
 	if(!g_strcmp0 (state,"disconnected")){
 		gui_calls_utils_delete_dial(dial);
-		if(answer_status==STORE_INTERACTION_CALL_STATUS_MISSED && direction==STORE_INTERACTION_DIRECTION_INCOMING)
+		if(answer_status==STORE_INTERACTION_CALL_STATUS_MISSED && direction==STORE_INTERACTION_DIRECTION_INCOMING){
 			notification_add("missed_call.png",gui_history_calls);
+		}
 	}else
 		gui_calls_utils_update_dial(dial,state);
 
@@ -196,9 +197,9 @@ static void gui_calls_new_call_callback(SphoneManager *manager, SphoneCall *call
 	gui_calls_check_voice();
 
 	if(!g_strcmp0 (state,"incoming"))
-		utils_start_ringing();
+		utils_start_ringing(dial);
 	else
-		utils_stop_ringing();
+		utils_stop_ringing(dial);
 
 	g_free(state);
 	g_free(dial);
