@@ -261,8 +261,6 @@ int gui_dialer_init(SphoneManager *manager)
 	g_signal_connect(G_OBJECT(display_back), "clicked", G_CALLBACK(gui_dialer_back_presses_callback), display);
 	g_signal_connect(G_OBJECT(display), "insert_text", G_CALLBACK(gui_dialer_validate_callback),NULL);
 
-	keys_grab_init(g_gui_calls.main_window);
-	
 	return 0;
 }
 

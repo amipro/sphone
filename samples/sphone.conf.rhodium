@@ -4,7 +4,7 @@ on.value=1
 off.value=0
 
 [action.audio]
-path=/sys/class/vogue_hw/audio"
+path=/sys/class/vogue_hw/audio
 on.value=2
 off.value=5
 

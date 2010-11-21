@@ -51,6 +51,8 @@ GdkPixbuf *utils_get_icon(const gchar *name);
 #define UTILS_CONF_ATTR_EXTERNAL_CALL_OUTGOING_ANSWERED "call.outgoing.answered"
 #define UTILS_CONF_ATTR_EXTERNAL_SMS_OUTGOING "sms.outgoing"
 #define UTILS_CONF_ATTR_EXTERNAL_SMS_INCOMING "sms.incoming"
+#define UTILS_CONF_ATTR_EXTERNAL_INCALL_START "incall.start"
+#define UTILS_CONF_ATTR_EXTERNAL_INCALL_STOP "incall.stop"
 
 #define UTILS_CONF_GROUP_ACTION_VIBRATE "action.vibrate"
 #define UTILS_CONF_ATTR_ACTION_VIBRATE_PATH "path"
@@ -61,11 +63,24 @@ GdkPixbuf *utils_get_icon(const gchar *name);
 #define UTILS_CONF_ATTR_ACTION_AUDIO_PATH "path"
 #define UTILS_CONF_ATTR_ACTION_AUDIO_VALUE_ON "on.value"
 #define UTILS_CONF_ATTR_ACTION_AUDIO_VALUE_OFF "off.value"
+#define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_DEVICE "alsa.device"
+#define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_NAME "alsa.route.control.name"
+#define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_RINGING "alsa.route.control.ringing"
+#define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_INCALL "alsa.route.control.incall"
 
+#define UTILS_CONF_GROUP_NOTIFICATIONS "notifications"
+#define UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_ENABLE "sound.enable"
+#define UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE "vibration.enable"
+#define UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_VOICE_INCOMING_PATH "sound.voice.incoming.path"
+#define UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_VOICE_REPEAT_ENABLE "sound.voice.incoming.repeat.enable"
+#define UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_SMS_INCOMING_PATH "sound.sms.incoming.path"
 
 gchar *utils_conf_get_string(const gchar *group, const gchar *name);
 gint utils_conf_get_int(const gchar *group, const gchar *name);
 gboolean utils_conf_has_key(const gchar *group, const gchar *name);
 void utils_external_exec(const gchar *name, ...);
+
+void utils_gst_init(int *argc, char ***argv);
+
 
 #endif

@@ -1,3 +1,9 @@
+0.05
+	- New feature - play audio file for incoming voice call/sms
+	- New feature - Set adio routing for ringing and incall
+	- New feature - Add external application handler for incall start and incall stop
+	- Bug fix - fix zombie processes for external handlers
+
 0.04:
 	- New feature - Import CSV file for names and dials
 	- New feature - missed call notification icon

@@ -39,8 +39,6 @@ sphone_SOURCES = \
 	utils.h \
 	gui-sms.c \
 	gui-sms.h \
-	keys-grab.c \
-	keys-grab.h \
 	store.c \
 	store.h \
 	sphone-store-tree-model.h \

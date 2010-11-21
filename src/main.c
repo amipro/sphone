@@ -104,7 +104,8 @@ int main (int argc, char *argv[])
 
 	
 	gtk_set_locale ();
-	gtk_init (&argc, &argv);
+	gtk_init(&argc, &argv);
+	utils_gst_init(&argc, &argv);
 
 	gboolean is_cmd_dialer_open=0;
 	gboolean is_cmd_sms_new=0;
