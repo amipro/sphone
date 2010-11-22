@@ -29,11 +29,11 @@ void debug(const char *s,...);
 void syserror(const char *s,...);
 void error(const char *s,...);
 
-void utils_vibrate(int val);
 void utils_audio_set(int val);
 void utils_start_ringing(const gchar *dial);
 void utils_stop_ringing(const gchar *dial);
-void utils_notify();
+int utils_ringing_status();
+void utils_sms_notify();
 
 GdkPixbuf *utils_get_photo_default();
 GdkPixbuf *utils_get_photo_unknown();
@@ -67,6 +67,8 @@ GdkPixbuf *utils_get_icon(const gchar *name);
 #define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_NAME "alsa.route.control.name"
 #define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_RINGING "alsa.route.control.ringing"
 #define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_INCALL "alsa.route.control.incall"
+#define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_SPEAKER "alsa.route.control.speaker"
+#define UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_HANDSET "alsa.route.control.handset"
 
 #define UTILS_CONF_GROUP_NOTIFICATIONS "notifications"
 #define UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_ENABLE "sound.enable"
@@ -76,11 +78,25 @@ GdkPixbuf *utils_get_icon(const gchar *name);
 #define UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_SMS_INCOMING_PATH "sound.sms.incoming.path"
 
 gchar *utils_conf_get_string(const gchar *group, const gchar *name);
+void utils_conf_set_string(const gchar *group, const gchar *name, const gchar *value);
 gint utils_conf_get_int(const gchar *group, const gchar *name);
+void utils_conf_set_int(const gchar *group, const gchar *name, int value);
 gboolean utils_conf_has_key(const gchar *group, const gchar *name);
+int utils_conf_save_local();
 void utils_external_exec(const gchar *name, ...);
 
 void utils_gst_init(int *argc, char ***argv);
+void utils_media_stop();
+int utils_media_play_once(gchar *path);
+int utils_media_play_repeat(gchar *path);
 
+enum {
+	UTILS_AUDIO_ROUTE_UNKNOWN=-1,
+	UTILS_AUDIO_ROUTE_SPEAKER=0,
+	UTILS_AUDIO_ROUTE_HANDSET=1,
+	UTILS_AUDIO_ROUTE_COUNT=2
+};
+int utils_audio_route_set(int route);
+int utils_audio_route_get();
 
 #endif

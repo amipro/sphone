@@ -39,7 +39,7 @@ static void gui_sms_coming_callback(SphoneManager *manager, gchar *from, gchar *
 	debug("gui_sms_coming_callback %s %s %s\n",from,text,time);
 
 	gui_sms_receive_show(from,text,_time);
-	utils_notify();
+	utils_sms_notify();
 }
 
 static void gui_sms_open_contact_callback(GtkButton *button)

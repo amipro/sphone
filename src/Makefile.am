@@ -48,7 +48,9 @@ sphone_SOURCES = \
 	book-import.c \
 	book-import.h \
 	proximity.c \
-	proximity.h
+	proximity.h \
+	gui-options.c \
+	gui-options.h
 
 sphone_LDFLAGS = \
 	-Wl,--export-dynamic

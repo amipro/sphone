@@ -24,6 +24,7 @@
 #include "utils.h"
 #include "gui-sms.h"
 #include "gui-contact-view.h"
+#include "gui-options.h"
 #include "notification.h"
 
 #define ICONS_PATH "/usr/share/sphone/icons/"
@@ -64,11 +65,13 @@ int notification_init(SphoneManager *manager){
 	GtkWidget *sms_menu = gtk_menu_item_new_with_label ("Send SMS");
 	GtkWidget *call_hist_menu = gtk_menu_item_new_with_label ("Call History");
 	GtkWidget *sms_hist_menu = gtk_menu_item_new_with_label ("SMS History");
+	GtkWidget *options_menu = gtk_menu_item_new_with_label ("Options");
 	GtkWidget *exit_menu = gtk_menu_item_new_with_label ("Exit");
 	g_signal_connect (G_OBJECT (dial_menu), "activate", G_CALLBACK (notification_dial_callback), NULL);
 	g_signal_connect (G_OBJECT (sms_menu), "activate", G_CALLBACK (notification_send_sms_callback), NULL);
 	g_signal_connect (G_OBJECT (call_hist_menu), "activate", G_CALLBACK (gui_history_calls), NULL);
 	g_signal_connect (G_OBJECT (sms_hist_menu), "activate", G_CALLBACK (gui_history_sms), NULL);
+	g_signal_connect (G_OBJECT (options_menu), "activate", G_CALLBACK (gui_options_open), NULL);
 	g_signal_connect (G_OBJECT (exit_menu), "activate", G_CALLBACK (gtk_main_quit), NULL);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), g_notification.op_label);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), gtk_separator_menu_item_new());
@@ -76,6 +79,7 @@ int notification_init(SphoneManager *manager){
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), sms_menu);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), call_hist_menu);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), sms_hist_menu);
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), options_menu);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), exit_menu);
 	gtk_widget_show_all (menu);
 	g_signal_connect (G_OBJECT (g_notification.status_icon_network_strength), "activate", G_CALLBACK (notification_icon_activate_callback), menu);

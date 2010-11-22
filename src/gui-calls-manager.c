@@ -36,6 +36,9 @@ struct {
 	GtkWidget *answer_button;
 	GtkWidget *hangup_button;
 	GtkWidget *activate_button;
+	GtkWidget *mute_button;
+	GtkWidget *speaker_button;
+	GtkWidget *handset_button;
 }g_calls_manager;
 
 enum{
@@ -56,6 +59,9 @@ static void gui_calls_answer_callback();
 static void gui_calls_hangup_callback();
 static void gui_calls_answer_waiting_callback();
 static void gui_calls_activate_callback();
+static void gui_calls_mute_callback();
+static void gui_calls_speaker_callback();
+static void gui_calls_handset_callback();
 
 static gboolean return_true(void){return TRUE;}
 
@@ -95,10 +101,12 @@ int gui_calls_manager_init(SphoneManager *manager)
 	gtk_tree_view_set_model(GTK_TREE_VIEW(g_calls_manager.dials_view), GTK_TREE_MODEL(g_calls_manager.dials_store));
 
 	GtkWidget *h1=gtk_hbox_new(FALSE, 0);
+	GtkWidget *h2=gtk_hbox_new(FALSE, 0);
 	
 	gtk_container_add(GTK_CONTAINER(s), g_calls_manager.dials_view);
 	gtk_container_add(GTK_CONTAINER(v1), s);
 	gtk_container_add(GTK_CONTAINER(v1), h1);
+	gtk_container_add(GTK_CONTAINER(v1), h2);
 	gtk_container_add(GTK_CONTAINER(g_calls_manager.main_window), v1);
 
 	gtk_widget_show_all(v1);
@@ -107,10 +115,16 @@ int gui_calls_manager_init(SphoneManager *manager)
 	g_calls_manager.answer_waiting_button=gtk_button_new_with_label("Answer");
 	g_calls_manager.activate_button=gtk_button_new_with_label("Activate");
 	g_calls_manager.hangup_button=gtk_button_new_with_label("Hangup");
+	g_calls_manager.mute_button=gtk_button_new_with_label("Mute ringing");
+	g_calls_manager.speaker_button=gtk_button_new_with_label("Speaker");
+	g_calls_manager.handset_button=gtk_button_new_with_label("Handset");
 	gtk_container_add(GTK_CONTAINER(h1), g_calls_manager.activate_button);
 	gtk_container_add(GTK_CONTAINER(h1), g_calls_manager.answer_button);
 	gtk_container_add(GTK_CONTAINER(h1), g_calls_manager.answer_waiting_button);
 	gtk_container_add(GTK_CONTAINER(h1), g_calls_manager.hangup_button);
+	gtk_container_add(GTK_CONTAINER(h2), g_calls_manager.mute_button);
+	gtk_container_add(GTK_CONTAINER(h2), g_calls_manager.speaker_button);
+	gtk_container_add(GTK_CONTAINER(h2), g_calls_manager.handset_button);
 
 	g_signal_connect(G_OBJECT(g_calls_manager.dials_view),"cursor-changed", G_CALLBACK(gui_calls_select_callback),NULL);
 	g_signal_connect(G_OBJECT(g_calls_manager.dials_view),"row-activated", G_CALLBACK(gui_calls_double_click_callback),NULL);
@@ -118,6 +132,9 @@ int gui_calls_manager_init(SphoneManager *manager)
 	g_signal_connect(G_OBJECT(g_calls_manager.answer_button),"clicked", G_CALLBACK(gui_calls_answer_callback),NULL);
 	g_signal_connect(G_OBJECT(g_calls_manager.answer_waiting_button),"clicked", G_CALLBACK(gui_calls_answer_waiting_callback),NULL);
 	g_signal_connect(G_OBJECT(g_calls_manager.hangup_button),"clicked", G_CALLBACK(gui_calls_hangup_callback),NULL);
+	g_signal_connect(G_OBJECT(g_calls_manager.mute_button),"clicked", G_CALLBACK(gui_calls_mute_callback),NULL);
+	g_signal_connect(G_OBJECT(g_calls_manager.speaker_button),"clicked", G_CALLBACK(gui_calls_speaker_callback),NULL);
+	g_signal_connect(G_OBJECT(g_calls_manager.handset_button),"clicked", G_CALLBACK(gui_calls_handset_callback),NULL);
 	g_signal_connect(G_OBJECT(g_calls_manager.main_window),"delete-event", G_CALLBACK(return_true),NULL);
 
 	g_signal_connect(G_OBJECT(manager),"call_added", G_CALLBACK(gui_calls_new_call_callback),NULL);
@@ -140,8 +157,7 @@ static void gui_calls_check_voice(void)
 		const gchar *state=g_value_get_string(&value);
 		if(!g_strcmp0(state,"active")
 		   || !g_strcmp0(state,"dialing")
-		   || !g_strcmp0(state,"alerting")
-		   || !g_strcmp0(state,"incoming")){
+		   || !g_strcmp0(state,"alerting")){
 			enable_voice=TRUE;
 		}
 		g_value_unset(&value);
@@ -152,6 +168,25 @@ static void gui_calls_check_voice(void)
 		utils_audio_set(1);
 	else
 		utils_audio_set(0);
+}
+
+static void gui_calls_update_global_status()
+{
+	if(utils_ringing_status())
+		gtk_widget_show(g_calls_manager.mute_button);
+	else
+		gtk_widget_hide(g_calls_manager.mute_button);
+
+	int route=utils_audio_route_get();
+	if(route==UTILS_AUDIO_ROUTE_SPEAKER || !utils_audio_route_check(UTILS_AUDIO_ROUTE_SPEAKER))
+		gtk_widget_hide(g_calls_manager.speaker_button);
+	else
+		gtk_widget_show(g_calls_manager.speaker_button);
+
+	if(route==UTILS_AUDIO_ROUTE_HANDSET || !utils_audio_route_check(UTILS_AUDIO_ROUTE_HANDSET))
+		gtk_widget_hide(g_calls_manager.handset_button);
+	else
+		gtk_widget_show(g_calls_manager.handset_button);
 }
 
 static void gui_calls_call_status_callback(SphoneCall *call)
@@ -178,6 +213,8 @@ static void gui_calls_call_status_callback(SphoneCall *call)
 		gui_calls_utils_update_dial(dial,state);
 
 	gui_calls_check_voice();
+
+	gui_calls_update_global_status();
 	
 	g_free(state);
 	g_free(dial);
@@ -201,6 +238,8 @@ static void gui_calls_new_call_callback(SphoneManager *manager, SphoneCall *call
 	else
 		utils_stop_ringing(dial);
 
+	gui_calls_update_global_status();
+	
 	g_free(state);
 	g_free(dial);
 }
@@ -253,7 +292,7 @@ static void gui_calls_select_callback()
 		gtk_widget_hide(g_calls_manager.answer_button);
 		gtk_widget_show(g_calls_manager.hangup_button);
 	}
-
+	
 	g_value_unset(&value);
 	                         
 }
@@ -382,6 +421,24 @@ static void gui_calls_answer_waiting_callback()
 static void gui_calls_activate_callback()
 {
 	sphone_manager_call_swap();
+}
+
+static void gui_calls_mute_callback()
+{
+	utils_stop_ringing(NULL);
+	gui_calls_update_global_status();
+}
+
+static void gui_calls_speaker_callback()
+{
+	utils_audio_route_set(UTILS_AUDIO_ROUTE_SPEAKER);
+	gui_calls_update_global_status();
+}
+
+static void gui_calls_handset_callback()
+{
+	utils_audio_route_set(UTILS_AUDIO_ROUTE_HANDSET);
+	gui_calls_update_global_status();
 }
 
 static void gui_calls_hangup_callback()

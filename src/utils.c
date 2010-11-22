@@ -30,16 +30,14 @@
 
 #define ICONS_PATH "/usr/share/sphone/icons/"
 
+static void utils_vibrate(int val);
 int conf_key_set_stickiness(char *key_code, char *cmd, char *arg);
 int conf_key_set_code(char *key_code, char *cmd, char *arg);
 int conf_key_set_power_key(char *key_code, char *cmd, char *arg);
-static void utils_gst_stop();
-static int utils_media_play_once(gchar *path);
-static int utils_media_play_repeat(gchar *path);
-static int utils_alsa_route_set_play();
-static int utils_alsa_route_set_incall();
-static int utils_alsa_route_save();
-static int utils_alsa_route_restore();
+static int utils_audio_route_set_play();
+static int utils_audio_route_set_incall();
+static int utils_audio_route_save();
+static int utils_audio_route_restore();
 
 int debug_level=0;
 void set_debug(int level){
@@ -78,21 +76,32 @@ void syserror(const char *s,...)
 	va_end(va);
 }
 
-void utils_audio_set(int val) {
-	debug(" utils_audio_set %d\n",val);
-	FILE *fout;
+static int utils_audio_status=0;	// 1: incall
+/*
+ 	Enable incall audio
+ 	Set audio routing
+ 	Execute extrenal application handler at active call start and end
+ */
+void utils_audio_set(int status) {
+	debug(" utils_audio_set %d\n",status);
 
-	if(val)
+	if(status==utils_audio_status)
+		return;
+	utils_audio_status=status;
+	
+	if(status)
 		utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_INCALL_START, NULL);
 		
 	char *path=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_PATH);
 	if(path){
-		if(val)
+		int val;
+		if(status)
 			val=utils_conf_get_int(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_VALUE_ON);
 		else
 			val=utils_conf_get_int(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_VALUE_OFF);
 		debug("utils_audio_set: write value %d to path %s\n",val,path);
 
+		FILE *fout;
 		fout=fopen(path,"w");
 		g_free(path);
 		if(!fout) {
@@ -104,23 +113,30 @@ void utils_audio_set(int val) {
 	}
 	
 	// Set audio routing
-	if(val){
-		utils_alsa_route_save();
-		utils_alsa_route_set_incall();
+	if(status){
+		utils_audio_route_save();
+		utils_audio_route_set_incall();
 	}else{
-		utils_alsa_route_restore();
+		utils_audio_route_restore();
 	}
 	
-	if(!val)
+	if(!status)
 		utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_INCALL_STOP, NULL);
 }
 
-void utils_vibrate(int val) {
+/*
+ Start/stop vibration
+ */
+static void utils_vibrate(int val) {
 	debug(" utils_vibrate %d\n",val);
 	FILE *fout;
 	char *path=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_VIBRATE,UTILS_CONF_ATTR_ACTION_VIBRATE_PATH);
 	if(!path)
 		return;
+	
+	if(utils_audio_status)	// No vibration during an active call
+		return;
+	
 	if(val)
 		val=utils_conf_get_int(UTILS_CONF_GROUP_ACTION_VIBRATE,UTILS_CONF_ATTR_ACTION_VIBRATE_VALUE_ON);
 	else
@@ -161,10 +177,17 @@ static void utils_start_ringing_vibrate()
 }
 
 static int utils_ringing_state=0;
+/*
+ Ringing starting:
+ - Start vibration (if enabled)
+ - Start ringtone playing (if enabled)
+ - Execute external application handler
+*/
 void utils_start_ringing(const gchar *dial)
 {
 	if(utils_ringing_state)
 		return;
+	utils_ringing_state=1;
 
 	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE))
 		utils_start_ringing_vibrate();
@@ -184,17 +207,43 @@ void utils_start_ringing(const gchar *dial)
 	utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_RINGING_ON,dial,NULL);
 }
 
+/*
+ Ringing stop:
+ - Stop vibration
+ - Stop ringtone playing
+ - Execute external application handler
+*/
 void utils_stop_ringing(const gchar *dial)
 {
-	if(!ring_timeout)
+	if(!utils_ringing_state)
 		return;
-	g_source_remove(ring_timeout);
-	ring_timeout=0;
-	utils_gst_stop();
+	utils_ringing_state=0;
+	
+	if(ring_timeout){
+		utils_vibrate(0);
+		g_source_remove(ring_timeout);
+		ring_timeout=0;
+	}
+	utils_media_stop();
 	utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_RINGING_OFF,dial,NULL);
 }
 
-void utils_notify()
+/*
+ Get ringing status
+ */
+int utils_ringing_status()
+{
+	return utils_ringing_state &&
+		(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_ENABLE)
+		 || utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE));
+}
+
+/*
+ Notify the user of incoming sms:
+ - Play sms notification
+ - Short vibration
+*/
+void utils_sms_notify()
 {
 	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_ENABLE)){
 		char *path=utils_conf_get_string(UTILS_CONF_GROUP_NOTIFICATIONS,UTILS_CONF_ATTR_NOTIFICATIONS_SOUND_SMS_INCOMING_PATH);
@@ -205,7 +254,9 @@ void utils_notify()
 		}
 	}
 	
-	utils_vibrate(1);
+	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE))
+		utils_vibrate(1);
+	
 	g_timeout_add_seconds(2,_utils_ring_stop_callback, NULL);
 }
 
@@ -250,38 +301,81 @@ GdkPixbuf *utils_get_icon(const gchar *name)
  	Configuration handling and parsing
  ****************************************************/
 
-static GKeyFile *conf=NULL;
+static GKeyFile *conf_global=NULL;
+static GKeyFile *conf_user=NULL;
 static void utils_conf_load(void)
 {
-	if(conf)
+	if(conf_global)
 		return;
 
-	conf=g_key_file_new();
+	conf_global=g_key_file_new();
+	conf_user=g_key_file_new();
 
 	// Load system wide configuration
-	g_key_file_load_from_dirs(conf,"sphone/sphone.conf",g_get_system_config_dirs(),NULL,G_KEY_FILE_NONE,NULL);
+	g_key_file_load_from_dirs(conf_global,"sphone/sphone.conf",g_get_system_config_dirs(),NULL,G_KEY_FILE_NONE,NULL);
 
-	// Override with local configuration
+	// load local configuration
 	gchar *localpath=g_build_filename(g_get_user_config_dir(),"sphone","sphone.conf",NULL);
-	g_key_file_load_from_file(conf,localpath,G_KEY_FILE_NONE,NULL);
+	g_key_file_load_from_file(conf_user,localpath,G_KEY_FILE_NONE,NULL);
+	g_free(localpath);
 }
 
 gchar *utils_conf_get_string(const gchar *group, const gchar *name)
 {
 	utils_conf_load();
-	return g_key_file_get_string(conf,group,name,NULL);
+	if(g_key_file_has_key(conf_user,group,name,NULL))
+		return g_key_file_get_string(conf_user,group,name,NULL);
+	return g_key_file_get_string(conf_global,group,name,NULL);
+}
+
+// Save only to local configuration
+void utils_conf_set_string(const gchar *group, const gchar *name, const gchar *value)
+{
+	utils_conf_load();
+	g_key_file_set_string(conf_user,group,name,value);
 }
 
 gint utils_conf_get_int(const gchar *group, const gchar *name)
 {
 	utils_conf_load();
-	return g_key_file_get_integer(conf,group,name,NULL);
+	if(g_key_file_has_key(conf_user,group,name,NULL))
+		return g_key_file_get_integer(conf_user,group,name,NULL);
+	return g_key_file_get_integer(conf_global,group,name,NULL);
+}
+
+// Save only to local configuration
+void utils_conf_set_int(const gchar *group, const gchar *name, int value)
+{
+	utils_conf_load();
+	g_key_file_set_integer(conf_user,group,name,value);
 }
 
 gboolean utils_conf_has_key(const gchar *group, const gchar *name)
 {
 	utils_conf_load();
-	return g_key_file_has_key(conf,group,name,NULL);
+	if(g_key_file_has_key(conf_user,group,name,NULL))
+		return TRUE;
+	return g_key_file_has_key(conf_global,group,name,NULL);
+}
+
+int utils_conf_save_local()
+{
+	int ret=1;
+	
+	gchar *localpath=g_build_filename(g_get_user_config_dir(),"sphone","sphone.conf",NULL);
+	gchar *contents=g_key_file_to_data(conf_user, NULL, NULL);
+	debug("utils_conf_save_local: contents: %s\n", contents);
+	if(contents){
+		GError *err=NULL;
+		ret=g_file_set_contents(localpath, contents, -1, &err)?0:1;
+		if(ret){
+			error("utils_conf_save_local: configuration file save failed: %s\n", err->message);
+			g_error_free(err);
+		}
+	}
+	g_free(localpath);
+
+	return ret;
 }
 
 /****************************************************
@@ -373,7 +467,7 @@ static gboolean utils_gst_bus_callback (GstBus *bus,GstMessage *message, gpointe
 			else{
 				gst_element_set_state (utils_gst_play, GST_STATE_NULL);
 				gst_bus_set_flushing(bus, TRUE);
-				utils_gst_stop();
+				utils_media_stop();
 			}
 			break;
 		default:
@@ -408,8 +502,8 @@ static int utils_gst_start(gchar *path)
 	gst_object_unref (bus);
 
 	// Set audio routing
-	utils_alsa_route_save();
-	utils_alsa_route_set_play();
+	utils_audio_route_save();
+	utils_audio_route_set_play();
 
 	gst_element_set_state (utils_gst_play, GST_STATE_PLAYING);
 	g_free(uri);
@@ -417,7 +511,7 @@ static int utils_gst_start(gchar *path)
 	return 0;
 }
 
-static void utils_gst_stop()
+void utils_media_stop()
 {
 	if(!utils_gst_play)
 		return ;
@@ -427,16 +521,16 @@ static void utils_gst_stop()
 	utils_gst_play=NULL;
 	utils_gst_repeat=0;
 	
-	utils_alsa_route_restore();
+	utils_audio_route_restore();
 }
 
-static int utils_media_play_once(gchar *path)
+int utils_media_play_once(gchar *path)
 {
 	utils_gst_repeat=0;
 	return utils_gst_start(path);
 }
 
-static int utils_media_play_repeat(gchar *path)
+int utils_media_play_repeat(gchar *path)
 {
 	utils_gst_repeat=1;
 	return utils_gst_start(path);
@@ -451,15 +545,29 @@ snd_ctl_elem_id_t *utils_alsa_route_elem_id=NULL;
 unsigned int utils_alsa_route_play=-1;
 unsigned int utils_alsa_route_incall=-1;
 
+unsigned int utils_alsa_routes[UTILS_AUDIO_ROUTE_COUNT];
+
+/*
+ Init the ALSA library:
+ - Open the configured device, if none, use default device.
+ - Search for the routing control
+ - Search for the ringing and incall routes values
+ */
 static int utils_alsa_init()
 {
 	if(utils_alsa_hctl)
 		return 0;
 	debug("utils_alsa_init: start\n");
+
+	int i;
+
+	for(i=0;i<UTILS_AUDIO_ROUTE_COUNT;i++)utils_alsa_routes[i]=-1;
 	
 	char *alsa_control=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_NAME);
 	char *alsa_route_play=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_RINGING);
 	char *alsa_route_incall=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_INCALL);
+	char *alsa_route_speaker=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_SPEAKER);
+	char *alsa_route_handset=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_AUDIO,UTILS_CONF_ATTR_ACTION_AUDIO_ALSA_ROUTE_CONTROL_HANDSET);
 	if(!alsa_control)
 		return 0;
 
@@ -496,7 +604,6 @@ static int utils_alsa_init()
 			debug("utils_alsa_init: Found element %s\n", name);
 
 			// Find the values
-			int i;
 			for(i=0; i<snd_ctl_elem_info_get_items(info); i++){
 				snd_ctl_elem_info_set_item(info, i);
 				snd_hctl_elem_info(elem, info);
@@ -511,6 +618,14 @@ static int utils_alsa_init()
 					debug("utils_alsa_init: utils_alsa_route_incall=%ud\n", i);
 					utils_alsa_route_incall=i;
 				}
+				if(alsa_route_speaker && !strcmp(alsa_route_speaker, s)){
+					debug("utils_alsa_init: alsa_route_speaker=%ud\n", i);
+					utils_alsa_routes[UTILS_AUDIO_ROUTE_SPEAKER]=i;
+				}
+				if(alsa_route_handset && !strcmp(alsa_route_handset, s)){
+					debug("utils_alsa_init: alsa_route_handset=%ud\n", i);
+					utils_alsa_routes[UTILS_AUDIO_ROUTE_HANDSET]=i;
+				}
 			}
 
 			snd_ctl_elem_id_malloc(&utils_alsa_route_elem_id);
@@ -519,6 +634,11 @@ static int utils_alsa_init()
 		}
 		elem=snd_hctl_elem_next(elem);
 	}
+
+	if(utils_alsa_route_play==-1)
+		utils_alsa_route_play=utils_alsa_routes[UTILS_AUDIO_ROUTE_SPEAKER];
+	if(utils_alsa_route_incall==-1)
+		utils_alsa_route_incall=utils_alsa_routes[UTILS_AUDIO_ROUTE_HANDSET];
 	
 	debug("utils_alsa_init: ok\n");
 done:
@@ -526,7 +646,22 @@ done:
 	return ret;
 }
 
-static const unsigned int utils_alsa_get_route()
+static unsigned int utils_alsa_route_from_alsa(unsigned int route)
+{
+	int ret=-1;
+	int i;
+
+	for(i=0;i<UTILS_AUDIO_ROUTE_COUNT;i++)
+	    if(utils_alsa_routes[i]==route)
+			ret=i;
+
+	return ret;
+}
+
+/*
+ Get the current value of the routing control
+ */
+static unsigned int utils_alsa_get_route()
 {
 	int err;
 	snd_ctl_elem_value_t *control;
@@ -549,6 +684,9 @@ static const unsigned int utils_alsa_get_route()
 	return v;
 }
 
+/*
+ Change the value of the routing control
+ */
 static int utils_alsa_set_route(unsigned int value)
 {
 	if(utils_alsa_init() || !utils_alsa_route_elem || !utils_alsa_route_elem_id)
@@ -572,23 +710,35 @@ static int utils_alsa_set_route(unsigned int value)
 	return 0;
 }
 
-
-static int utils_alsa_route_set_play()
+/*
+ Change sound routing to ringtone play value
+ */
+static int utils_audio_route_set_play()
 {
+	utils_alsa_init();
+	
 	if(utils_alsa_route_play==-1)
 		return 0;
+
+	if(utils_audio_status)
+		return 0;						// Don't change to play while incall
 	
-	debug("utils_alsa_route_play\n");
+	debug("utils_audio_route_set_play\n");
 	int ret=utils_alsa_set_route(utils_alsa_route_play);
 
 	if(ret)
-		error("utils_alsa_route_play: failed\n");
+		error("utils_audio_route_set_play: failed\n");
 	
 	return ret;
 }
 
-static int utils_alsa_route_set_incall()
+/*
+ Change sound routing to incall value
+ */
+static int utils_audio_route_set_incall()
 {
+	utils_alsa_init();
+	
 	if(utils_alsa_route_incall==-1)
 		return 0;
 	
@@ -601,28 +751,88 @@ static int utils_alsa_route_set_incall()
 	return ret;
 }
 
-static unsigned int utils_alsa_route_saved=-1;
-
-static int utils_alsa_route_save()
+/*
+ Check if the route applicable
+ */
+int utils_audio_route_check(int route)
 {
-	if(utils_alsa_route_saved!=-1){
-		error("utils_alsa_route_save: try to overwrite saved value\n");
-		return 1;
-	}
+	utils_alsa_init();
+	
+	if(utils_alsa_routes[route]==-1)
+		return 0;
+	
+	return 1;
+}
+
+/*
+ Change sound routing
+ */
+int utils_audio_route_set(int route)
+{
+	utils_alsa_init();
+	
+	if(utils_alsa_routes[route]==-1)
+		return 0;
+	
+	debug("utils_audio_route_set: %d\n", route);
+	int ret=utils_alsa_set_route(utils_alsa_routes[route]);
+
+	if(ret)
+		error("utils_audio_route_set: failed\n");
+	
+	return ret;
+}
+
+/*
+ Get sound routing
+ */
+int utils_audio_route_get()
+{
+	int route=utils_alsa_get_route();
+	
+	if(route==-1)
+		return UTILS_AUDIO_ROUTE_UNKNOWN;
+	
+	return utils_alsa_route_from_alsa(route);
+}
+
+static unsigned int utils_alsa_route_saved=-1;
+int utils_alsa_route_level=0;
+
+/*
+ Save the current routing control value so it can be restored after terminating the call or stoping the ringtone
+ Only the first call is considered, the nuber of calls to utils_audio_route_restore should be equivalent to 
+ the calls to utils_audio_route_save to restore the route value.
+ */
+static int utils_audio_route_save()
+{
+	utils_alsa_route_level++;
+	if(utils_alsa_route_level>1)
+		return 0;							// Already saved
 	
 	utils_alsa_route_saved=utils_alsa_get_route();
-	debug("utils_alsa_route_save: saved value %ud\n", utils_alsa_route_saved);
+	debug("utils_audio_route_save: saved value %u\n", utils_alsa_route_saved);
 
 	return 0;
 }
 
-static int utils_alsa_route_restore()
+static int utils_audio_route_restore()
 {
+	utils_alsa_route_level--;
+	if(utils_alsa_route_level<0){
+		error("utils_audio_route_restore: utils_alsa_route_level underrun\n");
+		utils_alsa_route_level=0;
+	}
+	
+	if(utils_alsa_route_level){
+		return 0;
+	}
+	
 	if(utils_alsa_route_play==-1 && utils_alsa_route_incall==-1)
 		return 0;
 	
 	if(utils_alsa_route_saved==-1){
-		error("utils_alsa_route_restore: with no saved route\n");
+		error("utils_audio_route_restore: with no saved route\n");
 		return 1;
 	}
 
