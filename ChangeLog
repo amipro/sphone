@@ -2,7 +2,9 @@
 	- New feature - play audio file for incoming voice call/sms
 	- New feature - Set adio routing for ringing and incall
 	- New feature - Add external application handler for incall start and incall stop
+	- New feature - Options dialog to enable/disable ring tone and vibration in addition to changing the ring tones.
 	- Bug fix - fix zombie processes for external handlers
+	- Changed the layout of the dialer. I think this is more usable in both landscape and portrait modes
 
 0.04:
 	- New feature - Import CSV file for names and dials

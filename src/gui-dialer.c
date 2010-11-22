@@ -33,6 +33,10 @@ struct{
 	GtkWidget *display;
 	GtkWidget *main_window;
 	GtkWidget *dials_view;
+	GtkWidget *book;
+	GtkWidget *container_book_landscape;
+	GtkWidget *container_book_portrait;
+	int is_portrait;
 }g_gui_calls;
 
 static int gui_dialer_book_update_model()
@@ -155,7 +159,7 @@ GtkWidget *gui_dialer_build_book()
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes("Photo", renderer, "pixbuf", SPHONE_STORE_TREE_MODEL_COLUMN_PICTURE, NULL);
 	gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
-	gtk_tree_view_column_set_min_width (column,40);
+	gtk_tree_view_column_set_min_width(column,40);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(g_gui_calls.dials_view), column);
 
 	renderer = gtk_cell_renderer_text_new();
@@ -163,6 +167,7 @@ GtkWidget *gui_dialer_build_book()
 	column = gtk_tree_view_column_new_with_attributes("Name", renderer, "text", SPHONE_STORE_TREE_MODEL_COLUMN_NAME, NULL);
 	gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
 	gtk_tree_view_column_set_expand(column,TRUE);
+	gtk_tree_view_column_set_min_width(column,100);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(g_gui_calls.dials_view), column);
 
 	renderer = gtk_cell_renderer_text_new();
@@ -170,10 +175,12 @@ GtkWidget *gui_dialer_build_book()
 	column = gtk_tree_view_column_new_with_attributes("Dial", renderer, "text", SPHONE_STORE_TREE_MODEL_COLUMN_DIAL, NULL);
 	gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
 	gtk_tree_view_column_set_expand(column,TRUE);
+	gtk_tree_view_column_set_min_width(column,100);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(g_gui_calls.dials_view), column);
 
 	gtk_tree_view_set_fixed_height_mode(GTK_TREE_VIEW(g_gui_calls.dials_view),TRUE);
 	scroll = gtk_scrolled_window_new(NULL,NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_add (GTK_CONTAINER(scroll),g_gui_calls.dials_view);
 
 	g_signal_connect(G_OBJECT(g_gui_calls.dials_view),"focus-in-event", G_CALLBACK(gui_dialer_book_focus_callback),NULL);
@@ -214,15 +221,15 @@ int gui_dialer_init(SphoneManager *manager)
 	gtk_window_set_deletable(GTK_WINDOW(g_gui_calls.main_window),FALSE);
 	gtk_window_set_default_size(GTK_WINDOW(g_gui_calls.main_window),400,220);
 	gtk_window_maximize(GTK_WINDOW(g_gui_calls.main_window));
-	GtkWidget *h1=gtk_hpaned_new();
-	GtkWidget *v1=gtk_table_new (6,2,TRUE);
+	GtkWidget *v1=gtk_vbox_new(FALSE, 5);
+	GtkWidget *book_dial_area=gtk_vpaned_new();
 	GtkWidget *actions_bar=gtk_hbox_new(TRUE,0);
-	GtkWidget *display_back=gtk_button_new_with_label ("    <    ");
+	GtkWidget *display_back=gtk_button_new_with_label ("\n    <    \n");
 	GtkWidget *display=gtk_entry_new();
 	GtkWidget *display_bar=gtk_hbox_new(FALSE,4);
 	GtkWidget *keypad=gui_keypad_setup(display);
-	GtkWidget *call_button=gtk_button_new_with_label("Call");
-	GtkWidget *cancel_button=gtk_button_new_with_label("Cancel");
+	GtkWidget *call_button=gtk_button_new_with_label("\nCall\n");
+	GtkWidget *cancel_button=gtk_button_new_with_label("\nCancel\n");
 	GdkColor white, black;
 	GtkWidget *e=gtk_event_box_new ();
 	g_gui_calls.manager=manager;
@@ -243,16 +250,16 @@ int gui_dialer_init(SphoneManager *manager)
 	gtk_container_add(GTK_CONTAINER(e), display);
 	gtk_box_pack_start(GTK_BOX(display_bar), e, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(display_bar), display_back, FALSE, FALSE, 0);
-	gtk_table_attach_defaults (GTK_TABLE(v1),display_bar,0,2,0,1);
-	gtk_table_attach_defaults (GTK_TABLE(v1),keypad,0,2,1,5);
+	gtk_box_pack_start(GTK_BOX(v1),display_bar,FALSE, FALSE, 0);
+	gtk_paned_pack1(GTK_PANED(book_dial_area), book, TRUE, TRUE);
+	gtk_paned_pack2(GTK_PANED(book_dial_area), keypad, TRUE, TRUE);
+	gtk_box_pack_start(GTK_BOX(v1),book_dial_area,TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(actions_bar), call_button);
 	gtk_container_add(GTK_CONTAINER(actions_bar), cancel_button);
-	gtk_table_attach_defaults (GTK_TABLE(v1),actions_bar,0,2,5,6);
-	gtk_paned_pack1(GTK_PANED(h1), v1, TRUE, TRUE);
-	gtk_paned_pack2(GTK_PANED(h1), book, TRUE, TRUE);
-	gtk_container_add(GTK_CONTAINER(g_gui_calls.main_window), h1);
+	gtk_box_pack_start(GTK_BOX(v1),actions_bar,FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(g_gui_calls.main_window), v1);
 
-	gtk_widget_show_all(h1);
+	gtk_widget_show_all(v1);
 	gtk_widget_grab_focus(display);
 	
 	g_signal_connect(G_OBJECT(call_button),"clicked", G_CALLBACK(gui_call_callback),NULL);
