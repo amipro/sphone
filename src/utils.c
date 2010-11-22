@@ -229,7 +229,7 @@ void utils_stop_ringing(const gchar *dial)
 }
 
 /*
- Get ringing status
+ Get ringing status, 1: ringing is active
  */
 int utils_ringing_status()
 {

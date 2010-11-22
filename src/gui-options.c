@@ -37,6 +37,8 @@ static void gui_options_set_file_callback(GtkFileChooser *chooser);
 static void gui_options_play_callback(GtkButton *button, GtkFileChooser *chooser);
 static void gui_options_stop_callback(GtkButton *button, GtkFileChooser *chooser);
 
+static int is_dirty=0;
+
 void gui_options_open()
 {
 	if(g_options.main_window){
@@ -128,7 +130,9 @@ static int gui_options_close(GtkWidget *w)
 		gtk_widget_destroy(g_options.main_window);
 	g_options.main_window=NULL;
 
-	utils_conf_save_local();
+	if(is_dirty)
+		utils_conf_save_local();
+	is_dirty=0;
 	
 	return FALSE;
 }
@@ -137,6 +141,8 @@ static void gui_options_set_bool_callback(GtkToggleButton *button)
 {
 	struct s_option *option=g_object_get_data(G_OBJECT(button), "option");
 	utils_conf_set_int(option->group, option->name, gtk_toggle_button_get_active(button)==TRUE?1:0);
+
+	is_dirty=1;
 }
 
 static void gui_options_set_file_callback(GtkFileChooser *chooser)
@@ -145,6 +151,8 @@ static void gui_options_set_file_callback(GtkFileChooser *chooser)
 	gchar *file=gtk_file_chooser_get_filename(chooser);
 	utils_conf_set_string(option->group, option->name, file);
 	g_free(file);
+
+	is_dirty=1;
 }
 
 static void gui_options_stop_callback(GtkButton *button, GtkFileChooser *chooser)
