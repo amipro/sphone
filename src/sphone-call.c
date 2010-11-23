@@ -106,6 +106,7 @@ static void _sphone_call_properties_callback(gpointer *data1,gchar *name, GValue
 			if(private->answer_status!=STORE_INTERACTION_CALL_STATUS_ESTABLISHED){  // Make sure only once
 				if(private->direction==STORE_INTERACTION_DIRECTION_OUTGOING){
 					utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_CALL_OUTGOING_ANSWERED,private->call_properties.line_identifier,NULL);
+					utils_connected_notify();
 				}else{
 					utils_external_exec(UTILS_CONF_ATTR_EXTERNAL_CALL_INCOMING_ANSWERED,private->call_properties.line_identifier,NULL);
 				}

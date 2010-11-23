@@ -260,6 +260,14 @@ void utils_sms_notify()
 	g_timeout_add_seconds(2,_utils_ring_stop_callback, NULL);
 }
 
+void utils_connected_notify()
+{
+	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE))
+		utils_vibrate(1);
+	
+	g_timeout_add_seconds(1,_utils_ring_stop_callback, NULL);
+}
+
 static GdkPixbuf *photo_default=NULL;
 static GdkPixbuf *photo_unknown=NULL;
 

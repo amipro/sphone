@@ -105,8 +105,8 @@ int gui_calls_manager_init(SphoneManager *manager)
 	
 	gtk_container_add(GTK_CONTAINER(s), g_calls_manager.dials_view);
 	gtk_container_add(GTK_CONTAINER(v1), s);
-	gtk_container_add(GTK_CONTAINER(v1), h1);
-	gtk_container_add(GTK_CONTAINER(v1), h2);
+	gtk_box_pack_start(GTK_BOX(v1), h1, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(v1), h2, FALSE, FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(g_calls_manager.main_window), v1);
 
 	gtk_widget_show_all(v1);

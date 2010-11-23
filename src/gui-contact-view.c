@@ -255,6 +255,7 @@ gint gui_contact_open_by_dial(const gchar *dial)
 	gtk_container_add (GTK_CONTAINER(scroll),calls_view);
 
 	GtkWidget *sms_content=gtk_label_new (NULL);
+	gtk_label_set_selectable(GTK_LABEL(sms_content), TRUE);
 
 	g_signal_connect_after(G_OBJECT(calls_view),"cursor-changed", G_CALLBACK(gui_contact_sms_selected_callback),sms_content);
 
@@ -442,6 +443,7 @@ gint gui_history_sms(void)
 	scroll = gtk_scrolled_window_new(NULL,NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	GtkWidget *sms_content=gtk_label_new (NULL);
+	gtk_label_set_selectable(GTK_LABEL(sms_content), TRUE);
 	g_signal_connect_after(G_OBJECT(calls_view),"cursor-changed", G_CALLBACK(gui_contact_sms_selected_callback),sms_content);
 	g_signal_connect_after(G_OBJECT(calls_view),"row-activated", G_CALLBACK(gui_contact_book_double_click_callback),NULL);
 

@@ -34,6 +34,7 @@ void utils_start_ringing(const gchar *dial);
 void utils_stop_ringing(const gchar *dial);
 int utils_ringing_status();
 void utils_sms_notify();
+void utils_connected_notify();
 
 GdkPixbuf *utils_get_photo_default();
 GdkPixbuf *utils_get_photo_unknown();
@@ -98,5 +99,6 @@ enum {
 };
 int utils_audio_route_set(int route);
 int utils_audio_route_get();
+int utils_audio_route_check(int route)
 
 #endif
