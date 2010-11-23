@@ -99,6 +99,6 @@ enum {
 };
 int utils_audio_route_set(int route);
 int utils_audio_route_get();
-int utils_audio_route_check(int route)
+int utils_audio_route_check(int route);
 
 #endif

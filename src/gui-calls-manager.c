@@ -145,6 +145,7 @@ int gui_calls_manager_init(SphoneManager *manager)
 /*
  check if the voice channel should be enabled
  */
+static int gui_calls_voice_status=0;
 static void gui_calls_check_voice(void)
 {
 	int enable_voice=FALSE;
@@ -165,9 +166,11 @@ static void gui_calls_check_voice(void)
 	}
 
 	if(enable_voice)
-		utils_audio_set(1);
+		gui_calls_voice_status=1;
 	else
-		utils_audio_set(0);
+		gui_calls_voice_status=0;
+	
+	utils_audio_set(gui_calls_voice_status);
 }
 
 static void gui_calls_update_global_status()
@@ -177,16 +180,18 @@ static void gui_calls_update_global_status()
 	else
 		gtk_widget_hide(g_calls_manager.mute_button);
 
-	int route=utils_audio_route_get();
-	if(route==UTILS_AUDIO_ROUTE_SPEAKER || !utils_audio_route_check(UTILS_AUDIO_ROUTE_SPEAKER))
-		gtk_widget_hide(g_calls_manager.speaker_button);
-	else
-		gtk_widget_show(g_calls_manager.speaker_button);
+	if(gui_calls_voice_status){
+		int route=utils_audio_route_get();
+		if(route==UTILS_AUDIO_ROUTE_SPEAKER || !utils_audio_route_check(UTILS_AUDIO_ROUTE_SPEAKER))
+			gtk_widget_hide(g_calls_manager.speaker_button);
+		else
+			gtk_widget_show(g_calls_manager.speaker_button);
 
-	if(route==UTILS_AUDIO_ROUTE_HANDSET || !utils_audio_route_check(UTILS_AUDIO_ROUTE_HANDSET))
-		gtk_widget_hide(g_calls_manager.handset_button);
-	else
-		gtk_widget_show(g_calls_manager.handset_button);
+		if(route==UTILS_AUDIO_ROUTE_HANDSET || !utils_audio_route_check(UTILS_AUDIO_ROUTE_HANDSET))
+			gtk_widget_hide(g_calls_manager.handset_button);
+		else
+			gtk_widget_show(g_calls_manager.handset_button);
+	}
 }
 
 static void gui_calls_call_status_callback(SphoneCall *call)

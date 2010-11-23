@@ -7,15 +7,31 @@ off.value=0
 path=/sys/class/vogue_hw/audio
 on.value=2
 off.value=5
+alsa.device=default
+alsa.route.control.name=Playback Route
+#alsa.route.control.ringing=SPEAKER	defaults to the value of alsa.route.control.speaker
+#alsa.route.control.incall=HANDSET	defaults to the value of alsa.route.control.handset
+alsa.route.control.speaker=SPEAKER
+alsa.route.control.handset=HANDSET
+
+[notifications]
+sound.enable=1
+vibration.enable=1
+sound.voice.incoming.path=/usr/share/sphone/ringtones/PhoneRinging.wav
+sound.voice.incoming.repeat.enable=1
+sound.sms.incoming.path=/usr/share/sphone/ringtones/text_message.wav
 
 [external.handlers]
-ringing.on=../../samples/ringing.sh
-ringing.off=../../samples/ringing.sh
-call.incoming=../../samples/call.sh
-call.incoming.missed=../../samples/call.sh
-call.incoming.answered=../../samples/call.sh
-call.outgoing=../../samples/call.sh
-call.outgoing.missed=../../samples/call.sh
-call.outgoing.answered=../../samples/call.sh
-sms.outgoing=../../samples/sms.sh
-sms.incoming=../../samples/sms.sh
+#ringing.on=/usr/share/sphone/samples/ringing.sh
+#ringing.off=/usr/share/sphone/samples/ringing.sh
+#call.incoming=/usr/share/sphone/samples/call.sh
+#call.incoming.missed=/usr/share/sphone/samples/call.sh
+#call.incoming.answered=/usr/share/sphone/samples/call.sh
+#call.outgoing=/usr/share/sphone/samples/call.sh
+#call.outgoing.missed=/usr/share/sphone/samples/call.sh
+#call.outgoing.answered=/usr/share/sphone/samples/call.sh
+#sms.outgoing=/usr/share/sphone/samples/sms.sh
+#sms.incoming=/usr/share/sphone/samples/sms.sh
+#incall.start=
+#incall.stop=
+

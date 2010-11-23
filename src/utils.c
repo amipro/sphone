@@ -133,10 +133,7 @@ static void utils_vibrate(int val) {
 	char *path=utils_conf_get_string(UTILS_CONF_GROUP_ACTION_VIBRATE,UTILS_CONF_ATTR_ACTION_VIBRATE_PATH);
 	if(!path)
 		return;
-	
-	if(utils_audio_status)	// No vibration during an active call
-		return;
-	
+		
 	if(val)
 		val=utils_conf_get_int(UTILS_CONF_GROUP_ACTION_VIBRATE,UTILS_CONF_ATTR_ACTION_VIBRATE_VALUE_ON);
 	else
@@ -169,6 +166,8 @@ static int _utils_ring_callback(gpointer data)
 static void utils_start_ringing_vibrate()
 {
 	if(ring_timeout)
+		return;
+	if(utils_audio_status)	// No vibration during an active call
 		return;
 
 	utils_vibrate(1);
@@ -254,18 +253,18 @@ void utils_sms_notify()
 		}
 	}
 	
-	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE))
+	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE)){
 		utils_vibrate(1);
-	
-	g_timeout_add_seconds(2,_utils_ring_stop_callback, NULL);
+		g_timeout_add_seconds(2,_utils_ring_stop_callback, NULL);
+	}
 }
 
 void utils_connected_notify()
 {
-	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE))
+	if(utils_conf_get_int(UTILS_CONF_GROUP_NOTIFICATIONS, UTILS_CONF_ATTR_NOTIFICATIONS_VIBRATION_ENABLE)){
 		utils_vibrate(1);
-	
-	g_timeout_add_seconds(1,_utils_ring_stop_callback, NULL);
+		g_timeout_add_seconds(2,_utils_ring_stop_callback, NULL);
+	}
 }
 
 static GdkPixbuf *photo_default=NULL;
