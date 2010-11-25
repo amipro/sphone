@@ -111,13 +111,13 @@ int gui_calls_manager_init(SphoneManager *manager)
 
 	gtk_widget_show_all(v1);
 
-	g_calls_manager.answer_button=gtk_button_new_with_label("Answer");
-	g_calls_manager.answer_waiting_button=gtk_button_new_with_label("Answer");
-	g_calls_manager.activate_button=gtk_button_new_with_label("Activate");
-	g_calls_manager.hangup_button=gtk_button_new_with_label("Hangup");
-	g_calls_manager.mute_button=gtk_button_new_with_label("Mute ringing");
-	g_calls_manager.speaker_button=gtk_button_new_with_label("Speaker");
-	g_calls_manager.handset_button=gtk_button_new_with_label("Handset");
+	g_calls_manager.answer_button=gtk_button_new_with_label("\nAnswer\n");
+	g_calls_manager.answer_waiting_button=gtk_button_new_with_label("\nAnswer\n");
+	g_calls_manager.activate_button=gtk_button_new_with_label("\nActivate\n");
+	g_calls_manager.hangup_button=gtk_button_new_with_label("\nHangup\n");
+	g_calls_manager.mute_button=gtk_button_new_with_label("\nMute ringing\n");
+	g_calls_manager.speaker_button=gtk_button_new_with_label("\nSpeaker\n");
+	g_calls_manager.handset_button=gtk_button_new_with_label("\nHandset\n");
 	gtk_container_add(GTK_CONTAINER(h1), g_calls_manager.activate_button);
 	gtk_container_add(GTK_CONTAINER(h1), g_calls_manager.answer_button);
 	gtk_container_add(GTK_CONTAINER(h1), g_calls_manager.answer_waiting_button);
